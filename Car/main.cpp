@@ -1,4 +1,4 @@
-#include<iostream>
+п»ї#include<iostream>
 #include<conio.h>
 #include<thread>
 #include<Windows.h>
@@ -189,7 +189,7 @@ public:
 		do
 		{
 			key = 0;
-			if(_kbhit()) //Функция kbhit возвращает только если нажата клавиша, в противном случае 0
+			if(_kbhit()) //Р¤СѓРЅРєС†РёСЏ kbhit РІРѕР·РІСЂР°С‰Р°РµС‚ С‚РѕР»СЊРєРѕ РµСЃР»Рё РЅР°Р¶Р°С‚Р° РєР»Р°РІРёС€Р°, РІ РїСЂРѕС‚РёРІРЅРѕРј СЃР»СѓС‡Р°Рµ 0
 				key = _getch();
 			switch (key)
 			{
@@ -201,7 +201,7 @@ public:
 			{
 				if (driver_inside)
 				{
-					std::cout << "Для начала нужно выйти из машины" << std::endl;
+					std::cout << "Р”Р»СЏ РЅР°С‡Р°Р»Р° РЅСѓР¶РЅРѕ РІС‹Р№С‚Рё РёР· РјР°С€РёРЅС‹" << std::endl;
 					std::this_thread::sleep_for(2s);
 					break;
 				}
