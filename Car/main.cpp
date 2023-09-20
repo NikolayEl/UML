@@ -1,6 +1,7 @@
 #include<iostream>
 #include<conio.h>
 #include<thread>
+#include<Windows.h>
 
 using namespace std::chrono_literals;
 
@@ -53,8 +54,8 @@ public:
 	}
 };
 
-#define MIN_ENGINE_CONSUMTION	3
-#define MAX_ENGINE_CONSUMTION	30
+#define MIN_ENGINE_CONSUMPTION	3
+#define MAX_ENGINE_CONSUMPTION	30
 
 class Engine
 {
@@ -88,8 +89,8 @@ public:
 		return is_started;
 	}
 	
-	Engine(double consumption) :DEFAULT_CONSUMPTION(consumption<MIN_ENGINE_CONSUMTION ? MIN_ENGINE_CONSUMTION :
-													consumption>MAX_ENGINE_CONSUMTION ? MAX_ENGINE_CONSUMTION :
+	Engine(double consumption) :DEFAULT_CONSUMPTION(consumption<MIN_ENGINE_CONSUMPTION ? MIN_ENGINE_CONSUMPTION :
+													consumption>MAX_ENGINE_CONSUMPTION ? MAX_ENGINE_CONSUMPTION :
 													consumption)
 	{
 		this->consumption = DEFAULT_CONSUMPTION;
@@ -116,6 +117,7 @@ class Car
 	int speed;
 	const int MAX_SPEED;
 	bool driver_inside;
+	bool is_move;
 	struct Threads
 	{
 		std::thread panel_thread;
@@ -139,6 +141,7 @@ public:
 		)
 	{
 		driver_inside = false;
+		is_move = false;
 		std::cout << "Your car is ready to go " << this << std::endl;
 	}
 	~Car()
@@ -161,6 +164,7 @@ public:
 	{
 		if (driver_inside && tank.get_fuel_level())
 		{
+			speed = 0;
 			engine.start();
 			threads.engine_idle_thread = std::thread(&Car::engine_idle, this);
 		}
@@ -169,6 +173,15 @@ public:
 	{
 		engine.stop();
 		if (threads.engine_idle_thread.joinable())threads.engine_idle_thread.join();
+	}
+	void acceleration()
+	{
+		is_move = true;
+	}
+	void braking()
+	{
+		if(speed == 0)
+			is_move = false;
 	}
 	void control()
 	{
@@ -198,10 +211,27 @@ public:
 				break;
 			}
 			case 'I':case 'i':
-				if (engine.started())stop();
+				if (engine.started())
+				{
+					speed = 0;
+					stop();
+				}
 				else start();
 				break;
+			case 'W':case 'w':
+				if (!is_move && engine.started()) acceleration();
+				if (engine.started())speed = ((speed + 5) > MAX_SPEED_UPPER_LEVEL? MAX_SPEED_UPPER_LEVEL: speed + 5);
+				if(speed != 0 && engine.started())engine.set_consumption_per_second(engine.get_consumption() * speed);
+				break;
+			case 'S':case 's':
+				if (!is_move && engine.started()) braking();
+				if (engine.started())speed = ((speed - 5) < 0 ? 0 : speed - 5);
+				if (speed != 0 && engine.started())engine.set_consumption_per_second(engine.get_consumption() / speed);
+				break;
 			case Escape:
+				if (speed != 0) speed = 0;
+				if (is_move) braking();
+				if (engine.started())stop();
 				get_out();
 			}
 			if (tank.get_fuel_level() == 0)stop();
@@ -214,12 +244,20 @@ public:
 	}
 	void panel()const
 	{
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		while (driver_inside)
 		{
 			system("cls");
-			std::cout << "Level fuel:\t" << tank.get_fuel_level() << " Leters\n";
+			std::cout << "Level fuel:\t" << tank.get_fuel_level() << " Leters";
+			SetConsoleTextAttribute(hConsole, 14);
+			std::cout << (tank.get_fuel_level() <= 5 ? "\t\tLOW FUEL" : "") << std::endl;
+			SetConsoleTextAttribute(hConsole, 15);
 			std::cout << "Engine is:\t" << (engine.started() ? "started" : "stopped") << std::endl;
 			std::this_thread::sleep_for(100ms);
+			std::cout << "Speed:\t";
+			SetConsoleTextAttribute(hConsole, 10);
+			std::cout << (is_move ? speed : 0) << std::endl;
+			SetConsoleTextAttribute(hConsole, 15);
 		}
 	}
 };
